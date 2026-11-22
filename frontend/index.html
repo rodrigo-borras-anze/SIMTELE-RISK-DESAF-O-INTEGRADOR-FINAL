@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIMTELE-RISK | Plataforma Integrada de Simulación</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-light">
+
+    <!-- Navegación -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4 shadow">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="#">🚡 SIMTELE-RISK</a>
+            <span class="navbar-text text-white-50">Plataforma de Simulación Numérica y Análisis de Riesgo</span>
+        </div>
+    </nav>
+
+    <div class="container pb-5">
+        
+        <!-- Encabezado -->
+        <div class="row text-center mb-4">
+            <div class="col">
+                <h2 class="fw-bold">Panel de Control Multiescenario</h2>
+                <p class="text-muted">Semana 2 — Integración de los 4 Módulos y Persistencia en SQLite</p>
+            </div>
+        </div>
+
+        <!-- Grilla de los 4 Módulos -->
+        <div class="row g-4 mb-5">
+
+            <!-- Módulo 1: Detención de Emergencia -->
+            <div class="col-md-6">
+                <div class="card h-100 shadow-sm border-0">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                        <span class="fw-bold">1. Detención de Emergencia (Raíces)</span>
+                        <select id="selectMod1" class="form-select form-select-sm w-auto" onchange="cargarModulo1()">
+                            <option value="NORMAL">Normal</option>
+                            <option value="ESTRES">Estrés</option>
+                            <option value="MAL_CONDICIONADO">Mal Condicionado</option>
+                        </select>
+                    </div>
+                    <div class="card-body">
+                        <p class="small text-muted">Solución de v(t) = 0 mediante Bisección, Newton-Raphson y Secante.</p>
+                        <canvas id="graficoModulo1" height="180"></canvas>
+                        <div id="infoMod1" class="mt-2 small text-muted"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Módulo 2: Deterioro Mecánico -->
+            <div class="col-md-6">
+                <div class="card h-100 shadow-sm border-0">
+                    <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                        <span class="fw-bold">2. Deterioro Mecánico (LU / GC + Umbral)</span>
+                        <select id="selectMod2" class="form-select form-select-sm w-auto" onchange="cargarModulo2()">
+                            <option value="NORMAL">Normal</option>
+                            <option value="ESTRES">Estrés</option>
+                            <option value="MAL_CONDICIONADO">Mal Condicionado</option>
+                        </select>
+                    </div>
+                    <div class="card-body">
+                        <p class="small text-muted">Calibración 4x4 (LU y Gradiente Conjugado) y cruce de umbral D(t) - D_umbral = 0.</p>
+                        <canvas id="graficoModulo2" height="180"></canvas>
+                        <div id="infoMod2" class="mt-2 small text-muted"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Módulo 3: Oscilaciones por Viento -->
+            <div class="col-md-6">
+                <div class="card h-100 shadow-sm border-0">
+                    <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+                        <span class="fw-bold">3. Oscilaciones por Viento</span>
+                        <select id="selectMod3" class="form-select form-select-sm w-auto" onchange="cargarModulo3()">
+                            <option value="NORMAL">Normal</option>
+                            <option value="ESTRES">Estrés</option>
+                            <option value="MAL_CONDICIONADO">Mal Condicionado</option>
+                        </select>
+                    </div>
+                    <div class="card-body">
+                        <p class="small text-muted">Resolución de EDOs (RK4) e Integración Numérica.</p>
+                        <canvas id="graficoModulo3" height="180"></canvas>
+                        <div id="infoMod3" class="mt-2 small text-muted"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Módulo 4: Reconstrucción de Sensores -->
+            <div class="col-md-6">
+                <div class="card h-100 shadow-sm border-0">
+                    <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+                        <span class="fw-bold">4. Reconstrucción de Sensores</span>
+                        <select id="selectMod4" class="form-select form-select-sm w-auto" onchange="cargarModulo4()">
+                            <option value="NORMAL">Normal</option>
+                            <option value="ESTRES">Estrés</option>
+                            <option value="MAL_CONDICIONADO">Mal Condicionado</option>
+                        </select>
+                    </div>
+                    <div class="card-body">
+                        <p class="small text-muted">Reconstrucción de telemetría faltante con Interpolación de Lagrange.</p>
+                        <canvas id="graficoModulo4" height="180"></canvas>
+                        <div id="infoMod4" class="mt-2 small text-muted"></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Tabla de Historial en SQLite -->
+        <div class="row">
+            <div class="col">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">🗄️ Historial de Simulaciones Registradas en SQLite</h5>
+                        <button class="btn btn-sm btn-outline-light" onclick="cargarHistorial()">🔄 Actualizar Historial</button>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover table-striped mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Módulo</th>
+                                        <th>Escenario</th>
+                                        <th>Fecha de Ejecución</th>
+                                        <th>Usuario / Equipo</th>
+                                        <th>Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tablaHistorial">
+                                    <tr>
+                                        <td colspan="6" class="text-center text-muted py-3">Cargando registros de la base de datos...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Lógica en JavaScript -->
+    <script>
+        const API_URL = '/api';
+        let chart1, chart2, chart3, chart4;
+
+        // Cargar Módulo 1
+        function cargarModulo1() {
+            const esc = document.getElementById('selectMod1').value;
+            fetch(`${API_URL}/modulo1/${esc}`)
+                .then(r => r.json())
+                .then(data => {
+                    const ctx = document.getElementById('graficoModulo1').getContext('2d');
+                    if (chart1) chart1.destroy();
+                    chart1 = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: data.graficos.curva_velocidad.t,
+                            datasets: [{
+                                label: `v(t) Escenario ${esc}`,
+                                data: data.graficos.curva_velocidad.v,
+                                borderColor: '#0d6efd',
+                                fill: false,
+                                tension: 0.1
+                            }]
+                        },
+                        options: { responsive: true }
+                    });
+                    document.getElementById('infoMod1').innerText = `Simulación ID #${data.simulacion_id_guardada} guardada en SQLite.`;
+                    cargarHistorial();
+                }).catch(err => console.log("Servidor backend no disponible aún"));
+        }
+
+       // Cargar Módulo 2
+        function cargarModulo2() {
+            const esc = document.getElementById('selectMod2').value;
+            fetch(`${API_URL}/modulo2/${esc}`)
+                .then(r => r.json())
+                .then(data => {
+                    const ctx = document.getElementById('graficoModulo2').getContext('2d');
+                    if (chart2) chart2.destroy();
+                    chart2 = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: data.graficos.curva_deterioro.t,
+                            datasets: [{
+                                label: `Deterioro D(t) (${esc})`,
+                                data: data.graficos.curva_deterioro.D,
+                                borderColor: '#198754',
+                                fill: false,
+                                tension: 0.1
+                            }]
+                        },
+                        options: { responsive: true }
+                    });
+                    const cal = data.calibracion_lineal;
+                    document.getElementById('infoMod2').innerHTML = `
+                        <strong>κ(A):</strong> ${cal.kappa} |
+                        <strong>LU:</strong> x=[${cal.lu.x.join(', ')}] (res: ${cal.lu.residuo_relativo}) |
+                        <strong>GC:</strong> ${cal.gradiente_conjugado.iteraciones} iters (res: ${cal.gradiente_conjugado.residuo_relativo}).
+                        <br>Guardado en SQLite (ID #${data.simulacion_id_guardada}).
+                    `;
+                    cargarHistorial();
+                }).catch(err => console.log("Error en Módulo 2:", err));
+        }
+        // Cargar Módulo 3
+        function cargarModulo3() {
+            const esc = document.getElementById('selectMod3').value;
+            fetch(`${API_URL}/modulo3/${esc}`)
+                .then(r => r.json())
+                .then(data => {
+                    const ctx = document.getElementById('graficoModulo3').getContext('2d');
+                    if (chart3) chart3.destroy();
+
+                    chart3 = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: data.rk4.ts.map(t => t.toFixed(2)),
+                            datasets: [
+                                {
+                                    label: 'Exacta',
+                                    data: data.analitica,
+                                    borderColor: '#212529',
+                                    borderWidth: 2,
+                                    fill: false,
+                                    pointRadius: 0
+                                },
+                                {
+                                    label: `RK4 (${esc})`,
+                                    data: data.rk4.xs,
+                                    borderColor: '#ffc107',
+                                    fill: false,
+                                    pointRadius: 0
+                                },
+                                {
+                                    label: `RK2 Heun (${esc})`,
+                                    data: data.rk2.xs,
+                                    borderColor: '#0dcaf0',
+                                    borderDash: [5, 5],
+                                    fill: false,
+                                    pointRadius: 0
+                                }
+                            ]
+                        },
+                        options: { responsive: true }
+                    });
+
+                    let extraSens = '';
+                    if (data.sensibilidad) {
+                        const mult = (data.sensibilidad.X_perturbada / data.sensibilidad.X).toFixed(1);
+                        extraSens = `<br><strong>Sensibilidad (+1% en ωf):</strong> Amplitud pasa de ${data.sensibilidad.X.toFixed(2)} m a ${data.sensibilidad.X_perturbada.toFixed(1)} m (×${mult}).`;
+                    }
+
+                    document.getElementById('infoMod3').innerHTML = `
+                        <strong>Error máx:</strong> RK2=${data.rk2.error_max.toExponential(2)} | RK4=${data.rk4.error_max.toExponential(2)}<br>
+                        <strong>∫x²dt (RK4):</strong> Trapecio=${data.integral.trapecio.toFixed(4)} | Simpson=${data.integral.simpson.toFixed(4)} | Romberg=${data.integral.romberg.toFixed(4)}
+                        ${extraSens}<br>
+                        Guardado en SQLite (ID #${data.simulacion_id_guardada}).
+                    `;
+                    cargarHistorial();
+                }).catch(err => console.log("Error en Módulo 3:", err));
+        }
+        // Cargar Módulo 4
+        function cargarModulo4() {
+            const esc = document.getElementById('selectMod4').value;
+            fetch(`${API_URL}/modulo4/${esc}`)
+                .then(r => r.json())
+                .then(data => {
+                    const ctx = document.getElementById('graficoModulo4').getContext('2d');
+                    if (chart4) chart4.destroy();
+
+                    const c = data.graficos.curva_sensores;
+                    const opciones = { responsive: true };
+                    if (esc === 'MAL_CONDICIONADO') {
+                        opciones.scales = { y: { min: -1.0, max: 2.0 } };
+                    }
+
+                    chart4 = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: c.t,
+                            datasets: [
+                                { label: `Original (${data.descripcion})`, data: c.y_original, borderColor: '#212529', borderWidth: 2, fill: false, pointRadius: 0 },
+                                { label: 'Lagrange', data: c.y_lagrange, borderColor: '#dc3545', borderDash: [6, 4], fill: false, pointRadius: 0 },
+                                { label: 'Newton', data: c.y_newton, borderColor: '#fd7e14', borderDash: [2, 3], fill: false, pointRadius: 0 },
+                                { label: 'Splines Cúbicos', data: c.y_splines, borderColor: '#198754', fill: false, pointRadius: 0 }
+                            ]
+                        },
+                        options: opciones
+                    });
+
+                    const m = data.metricas;
+                    document.getElementById('infoMod4').innerHTML = `
+                        <strong>Ea máx (ocultos):</strong> Lagrange=${m.lagrange.ea_max_ocultos.toExponential(2)} | Newton=${m.newton.ea_max_ocultos.toExponential(2)} | Splines=${m.splines.ea_max_ocultos.toExponential(2)}<br>
+                        ${data.nota} Guardado en SQLite (ID #${data.simulacion_id_guardada}).
+                    `;
+                    cargarHistorial();
+                }).catch(err => console.log("Error en Módulo 4:", err));
+        }
+        // Cargar Historial desde SQLite
+        function cargarHistorial() {
+            fetch(`${API_URL}/historial`)
+                .then(r => r.json())
+                .then(data => {
+                    const tbody = document.getElementById('tablaHistorial');
+                    if (!data.historial || data.historial.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">No hay simulaciones registradas aún.</td></tr>';
+                        return;
+                    }
+                    tbody.innerHTML = data.historial.map(item => `
+                        <tr>
+                            <td><strong>#${item.id}</strong></td>
+                            <td>${item.modulo}</td>
+                            <td><span class="badge ${item.escenario === 'NORMAL' ? 'bg-primary' : item.escenario === 'ESTRES' ? 'bg-warning text-dark' : 'bg-danger'}">${item.escenario}</span></td>
+                            <td>${item.fecha}</td>
+                            <td>${item.usuario_equipo}</td>
+                            <td><span class="badge bg-success">${item.estado}</span></td>
+                        </tr>
+                    `).join('');
+                }).catch(err => console.log("No se pudo cargar el historial"));
+        }
+
+        // Carga inicial al abrir la página
+        window.onload = () => {
+            cargarModulo1();
+            cargarModulo2();
+            cargarModulo3();
+            cargarModulo4();
+            cargarHistorial();
+        };
+    </script>
+</body>
+</html>
