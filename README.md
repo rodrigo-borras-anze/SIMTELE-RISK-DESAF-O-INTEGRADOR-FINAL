@@ -102,6 +102,3 @@ Cada módulo permite ejecutar simulaciones en tres condiciones experimentales:
 | `GET /api/modulo4/<escenario>` | Reconstrucción con Lagrange, Newton y Splines Cúbicos |
 | `GET /api/modulo1_apoyo/<tipo>` | Apoyo de frenado con EDOs
 
-
-
-![Diagrama Entidad Relación](./database/der.png)
